@@ -24,10 +24,29 @@ img {
 
 .content {
 	padding: 20px 0;
+	flex-grow: 1;
 }
 
 .content__sort {
 	margin-bottom: 40px;
 }
 
+#root {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+.btn_type_secondary {
+	background:linear-gradient(45deg, rgba(250, 107, 46, 0.932), rgba(83, 206, 31, 0.932));;
+	color: #FFFFFF;
+	cursor: pointer;
+	border-radius: 20px;
+	border: none;
+		font-weight: 300;
+margin-top: 10px;
+padding: 10px;
+}
 
+.btn_type_secondary:hover {
+	background-color: #16BB64;
+}
