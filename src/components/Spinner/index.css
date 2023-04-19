@@ -3,10 +3,11 @@
 	width: 100px;
 	height: 100px;
 	position: relative;
-	transform-origin: 63px 63px;
+	transform-origin: 73px 73px;
 	animation: spin 1s infinite linear;
 	left: 50%;
-}
+	margin-block: 10%;
+	}
 
 .loader .spinner {
 	display: block;

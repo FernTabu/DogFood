@@ -6,7 +6,7 @@ export const ContentHeader = ({title, children}) => {
     
     return (
         <div>
-            <a href="#" className={s.buttonBack} onClick={() => navigate(-1)}>Назад</a>
+            <a href="#" className={s.buttonBack} onClick={() => navigate(-1)}>{"<"} Назад</a>
             <h1 className={s.title}>{title}</h1>
             {children}
         </div>

@@ -1,47 +1,78 @@
-import s from './index.module.css';
-import cn from 'classnames';
-import { ReactComponent as FavoriteIcon } from './img/favorites.svg';
-import { Link } from 'react-router-dom';
-import { CardContext } from '../../context/cardContext';
-import React, { useContext } from "react";
-import { UserContext } from './../../context/userContext';
-import { ThemeContext } from "../../context/themeContext";
+import React, { useContext, useEffect, useState } from "react";
+import { Logo } from "../Logo/Logo";
+import { Search } from "../Search/Search";
+import "./style.css";
 
-const Header = ({ children, user, onUpdateUser }) => {
-  const currentUser = useContext(UserContext);
-  const theme = useContext(ThemeContext);
+import IconBasket from "./basketMaterial/BasketMaterial";
+import { UserContext } from "../../context/userContext";
+import { CardContext } from "../../context/cardContext";
+import { Link, useNavigate } from "react-router-dom";
+import { ReactComponent as Like } from "../Card/like.svg";
+import { ReactComponent as LoginIcon } from "./images/login.svg";
+
+
+
+export const Header = ({ setShowModal }) => {
+  const { currentUser, searchQuery, setSearchQuery, parentCounter, isAuthentificated } =
+    useContext(UserContext);
+  const [counter, setCounter] = useState(parentCounter);
   const { favorites } = useContext(CardContext);
 
-  const handleClickButtonEdit = (e) => {
-    e.preventDefault();
-    theme.toggleTheme();
-    onUpdateUser(currentUser.user.name = 'Ольга', currentUser.user.about = ' !Студент! ')
+  useEffect(() => {
+    setCounter((st) => st + 1);
+
+    return () => setCounter(parentCounter);
+  }, [parentCounter]);
+
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
   }
 
+  // state.push(); deprecated!!!
   return (
-    <header className={cn(s.header, 'cover')}>
+    <div className="header" id="head">
       <div className="container">
-        <div className={s.header__wrapper}>
-          {children}
-          <div className={s.iconsMenu}>
-            <Link className={s.favoritesLink} to={{ pathname: "/favorites", state: 'sfsdfsdf' }}>
-              <FavoriteIcon />
-              {favorites.length !== 0 && <span className={s.iconBubble}>{favorites.length}</span>}
+        <div className="header__wrapper">
+          <div className="header__left">
+            <Logo />
+            <Search searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+          </div>
+          <div className="header__center">
+            <IconBasket count={counter} />
+            <Link to={"/favorites"} className="header__bubble-link">
+              <Like className="header__liked" />
+              {favorites.length !== 0 && (
+                <span className="header__bubble">{favorites.length}</span>
+              )}
             </Link>
           </div>
-          <div className={s.profile}>
-            {currentUser.user?.avatar && <image src={currentUser.user.avatar}></image>}
-            {currentUser.user?.email && <span>{currentUser.user.email}</span>}
-            {currentUser.user?.name && <span>{currentUser.user.name}: {currentUser.user.about}</span>}
-            <button onClick={handleClickButtonEdit} className="btn_type_secondary">
-              Изменить
-            </button>
+          <div className="header__right">
+            {!isAuthentificated ? <Link to={"/login"} className="header__link" onClick={() => setShowModal(true)}>
+              <LoginIcon />
+            </Link> :
+              <Link to={"/profile"} className="text__link" onClick={() => setShowModal(true)}>
+                Личный кабинет
+              </Link>
+            }
+            {/* <div>
+            <span>{currentUser.email} </span>
+            <span>{currentUser.about}</span>
+          </div> */}
+            <Link to={"/newproduct"} className="text__link">
+              Добавить продукт
+            </Link>
+            <Link to={"/chart"} className="text__link1">
+              Чарт
+            </Link>
+            <Link to={"/faq"} className="text__link">
+              Мысли физиков)
+            </Link>
           </div>
-
         </div>
       </div>
-    </header>
+    </div>
   );
 };
-
-export default Header;

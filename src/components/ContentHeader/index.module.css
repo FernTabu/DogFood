@@ -3,11 +3,13 @@
 	line-height: 1.5;
 	font-weight: 800;
 	margin-bottom: 20px;
-}
+}  
 
 .buttonBack {
-	color: #7B8E98;
-	font-weight: 400;
-	font-size: 14px;
-	line-height: 20px;
+	color: #5a7a8b;
+	font-weight: bold;
+	font-size: 16px;
+	line-height: 30px;
+	text-decoration: none;
+	text-align: left;
 }

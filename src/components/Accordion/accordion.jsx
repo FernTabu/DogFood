@@ -7,6 +7,7 @@ export const Accordion = ({children, title}) => {
 
     function toggleStateAccordion (){
         setSelected(!selected);
+        
     }
 
     return (

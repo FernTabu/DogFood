@@ -97,19 +97,18 @@
 	border: none;
 	padding: 0;
 	display: flex;
-}
 
-.card__favorite svg {
-	fill: #FFFFFF;
-	stroke-width: 1px;
-	stroke: #7b8e98;
 }
+.card__favorite_active {
+  fill: red;
+	stroke-width: 1px
 
-.card__favorite_is-active svg {
-	fill: #F44336;
-	stroke-width: 0;
 }
-
+.card__favorite_not_active {
+	fill: transparent;
+	stroke: black;
+	stroke-width: 0.5px
+  }
 .card__cart {
 	margin-top: auto;
 }
@@ -146,6 +145,7 @@
 	font-weight: 800;
 	font-size: 16px;
 	line-height: 20px;
+  position: absolute;
 }
 
 .tag_type_new {
@@ -155,4 +155,10 @@
 .tag_type_sale {
 	background-color: #01A54E;
 	color: #FFFFFF;
+}
+/* svg {
+    fill: red;
+} */
+.card__liked > svg {
+  fill: red;
 }

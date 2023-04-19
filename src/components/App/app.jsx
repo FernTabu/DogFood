@@ -1,149 +1,239 @@
-import { useState, useEffect, useCallback } from 'react';
-import Footer from '../Footer/footer';
-import Header from '../Header/header';
-import Logo from '../Logo/logo';
-import Search from '../Search/search';
-import './index.css';
-import SeachInfo from '../SeachInfo';
-import api from '../../utils/api';
-import useDebounce from '../../hooks/useDebounce';
-import { isLiked } from '../../utils/product';
-import { CatalogPage } from '../../pages/CatalogPage/catalog-page';
-import { ProductPage } from '../../pages/ProductPage/product-page';
-import { Route, Routes, useNavigate } from 'react-router-dom';
-import { NotFoundPage } from '../../pages/NotFoundPage/not-found-page';
-import { UserContext } from '../../context/userContext';
-import { CardContext } from '../../context/cardContext';
-import { FaqPage } from '../../pages/FAQPage/faq-page';
-import { FavoritePage } from '../../pages/FavoritePage/favorite-page';
-import { SortContext } from '../../context/sortContext';
-import { ThemeContext, themes } from '../../context/themeContext';
+import React, { useEffect, useRef, useState } from "react";
+import { Footer } from "../Footer/Footer";
+import { Header } from "../Header/Header";
+import "./App.scss";
+import { api } from "../../utils/api";
+import { findLike, useDebounce } from "../../utils/utils";
+import { Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { ProductPage } from "../../pages/Product/ProductPage";
+import { CatalogPage } from "../../pages/Catalog/CatalogPage";
+import { UserContext } from "../../context/userContext";
+import { CardContext } from "../../context/cardContext";
+import { FaqPage } from "../../pages/FAQ/faq-page";
+import { NotFound } from "../../pages/NotFound/NotFound";
+import { Favorites } from "../../pages/Favorites/Favorites";
+import { Cart} from "../Cart/Cart"
+import { Form } from "../Form/Form";
+import { RegistrationForm } from "../Form/RegistrationForm";
+import { Modal } from "../Modal/Modal";
+import { Login } from "../Auth/Login/Login";
+import { Register } from "../Auth/Register/Register";
+import { ResetPass } from "../Auth/ResetPassword/ResetPassword";
+import { parseJwt } from "../../utils/parseJWT";
+import { Profile } from "../Profile/Profile";
+import { Chart } from "../Chart/Chart";
+import { NewProduct } from "../NewProduct/NewProduct";
+
 
 function App() {
   const [cards, setCards] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const debounceSearchQuery = useDebounce(searchQuery, 300);
+  const [searchQuery, setSearchQuery] = useState(undefined);
+  const [parentCounter, setParentCounter] = useState(0);
+  const [currentUser, setCurrentUser] = useState({});
   const [favorites, setFavorites] = useState([]);
-  const [selectedTabId, setSelectedTabId] = useState("popular");
-  const [theme, setTheme] = useState(themes.light)
+  const [formData, setFormData] = useState([]);
+  const [activeModal, setShowModal] = useState(false);
+  const [isAuthentificated, setIsAuthentificated] = useState(false);
+  
 
-  const navigate = useNavigate()
-  const handleRequest = useCallback(() => {
-    setIsLoading(true);
-    api.search(searchQuery)
-      .then((searchResult) => {
-        setCards(searchResult)
-      })
-      .catch(err => console.log(err))
-      .finally(() => {
-        setIsLoading(false);
-      })
-  }, [searchQuery])
 
-  useEffect(() => {
-    setIsLoading(true);
-    Promise.all([api.getProductList(), api.getUserInfo()])
-      .then(([productsData, userData]) => {
-        setCurrentUser(userData);
-        setCards(productsData.products);
-        const favoriteProducts = productsData.products.filter(item => isLiked(item.likes, userData._id));
-        setFavorites(prevSate => favoriteProducts)
-      })
-      .catch(err => console.log(err))
-      .finally(() => {
-        setIsLoading(false);
-      })
-  }, [])
-
-  useEffect(() => {
-    handleRequest()
-  }, [debounceSearchQuery])
-
-  const handleFormSubmit = (inputText) => {
-    navigate('/');
-    setSearchQuery(inputText);
-    handleRequest();
-  }
-
-  const handleInputChange = (inputValue) => {
-    setSearchQuery(inputValue);
-  }
-
-  function handleUpdateUser(userUpdateData) {
-    api.setUserInfo(userUpdateData)
-      .then((newUserData) => {
-        setCurrentUser(newUserData)
-      })
-  }
-
-  const handleProductLike = useCallback((product) => {
-    const liked = isLiked(product.likes, currentUser._id)
-    return api.changeLikeProduct(product._id, liked)
-      .then((updateCard) => {
-        const newProducts = cards.map(cardState => {
-          return cardState._id === updateCard._id ? updateCard : cardState
-        })
-
-        if (!liked) {
-          setFavorites(prevState => [...prevState, updateCard])
-        } else {
-          setFavorites(prevState => prevState.filter(card => card._id !== updateCard._id))
-        }
-
-        setCards(newProducts);
-        return updateCard;
-      })
-  }, [currentUser, cards])
-
-  const toggleTheme = () => {
-    theme === themes.dark ? setTheme(themes.light) : setTheme(themes.dark)
+  const filteredCards = (products, id) => {
+    return products;
+    // console.log({products, id});
+    // return products.filter((e) => e.author._id === id);
   };
-console.log(theme);
-  return (
-    <ThemeContext.Provider value={{ theme: themes.light, toggleTheme: toggleTheme }}>
-      <UserContext.Provider value={{ user: currentUser, isLoading }}>
-        <SortContext.Provider value={{ selectedTabId, setSelectedTabId }}>
-            <CardContext.Provider value={{ cards, favorites, handleLike: handleProductLike }}>
-              <Header>
-                <>
-                  <Logo className="logo logo_place_header" href="/" />
-                  <Routes>
-                    <Route path='/' element={
-                      <Search
-                        onSubmit={handleFormSubmit}
-                        onInput={handleInputChange}
-                      />
-                    } />
-                  </Routes>
-                </>
-              </Header>
-            <main className='content container' style={{ backgroundColor: theme.background }}>
-                <SeachInfo searchText={searchQuery} />
-                <Routes>
-                  <Route index element={
-                  <CatalogPage/>
-                  } />
-                  <Route path='/product/:productId' element={
-                    <ProductPage
-                      isLoading={isLoading}
-                    />
-                  } />
-                  <Route path='/faq' element={<FaqPage />} />
-                  <Route path='/favorites' element={
-                    <FavoritePage />}
-                  />
-                  <Route path='*' element={<NotFoundPage />} />
-                </Routes>
+  const handleSearch = (search) => {
+    api
+      .searchProducts(search)
+      .then((data) => setCards(filteredCards(data, currentUser._id)));
+  };
 
-              </main>
-              <Footer />
-            </CardContext.Provider>
-        </SortContext.Provider>
+  const debounceValueInApp = useDebounce(searchQuery, 500);
+  // функция по нажатию / отжатию лайка
+  function handleProductLike(product) {
+    // понимаем , отлайкан ли продукт был
+    const isLiked = findLike(product, currentUser);
+    isLiked
+      ? // Если товар был с лайком, значит было действие по удалению лайка
+      api.deleteLike(product._id).then((newCard) => {
+        // newCard - карточка с уже изменненым количеством лайков
+        const newCards = cards.map((e) =>
+          e._id === newCard._id ? newCard : e
+        );
+        setCards(filteredCards(newCards, currentUser._id));
+        setFavorites((state) => state.filter((f) => f._id !== newCard._id));
+      })
+      : // Если не отлайкан, значит действие было совершено для добавления лайка.
+      api.addLike(product._id).then((newCard) => {
+        const newCards = cards.map((e) =>
+          e._id === newCard._id ? newCard : e
+        );
+        setCards(filteredCards(newCards, currentUser._id));
+        setFavorites((favor) => [...favor, newCard]);
+      });
+      return isLiked;
+  }
+
+  useEffect(() => {
+    if (debounceValueInApp === undefined) return;
+    handleSearch(debounceValueInApp);
+  }, [debounceValueInApp]);
+
+  // Первоначальная загрузка карточек/продуктов/постов/сущностей и данных юзера
+  useEffect(() => {
+    Promise.all([api.getUserInfo(), api.getProductList()]).then(
+      ([userData, productData]) => {
+        // сеттим юзера
+        setCurrentUser(userData);
+        const items = filteredCards(productData.products, userData._id);
+        // сеттим карточки
+        setCards(items);
+        // получаем отлайканные нами карточки
+        const fav = items.filter((e) => findLike(e, userData));
+        // сеттим карточки в избранный стейт
+        setFavorites(fav);
+      }
+    );
+  }, [isAuthentificated]);
+
+  const setSortCards = (sort) => {
+    if (sort === "cheap") {
+      const newCards = cards.sort((a, b) => (a.price - a.discount / 100 * a.price) - (b.price - b.discount / 100 * b.price));
+      setCards([...newCards]);
+    }
+    if (sort === "expensive") {
+      const newCards = cards.sort((a, b) => (b.price - b.discount / 100 * b.price) - (a.price - a.discount / 100 * a.price));
+      setCards([...newCards]);
+    }
+    if (sort === "popular") {
+      const newCards = cards.sort((a, b) => b.likes.length - a.likes.length);
+      setCards([...newCards]);
+    }
+    if (sort === "sale") {
+      const newCards = cards.sort((a, b) => b.discount - a.discount);
+      setCards([...newCards]);
+    }
+    if (sort === "new") {
+      const newCards = cards.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+      setCards([...newCards]);
+    }
+  };
+
+  const contextValue = {
+    setSort: setSortCards,
+    currentUser,
+    setCurrentUser,
+    searchQuery,
+    setSearchQuery,
+    setParentCounter,
+    parentCounter,
+    isAuthentificated,
+
+  };
+  const contextCardValue = {
+    cards: cards,
+    setParentCounter,
+    handleProductLike,
+    favorites,
+    setFavorites,
+  };
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // const authPath = ['/reset-password', '/register']
+    const token = localStorage.getItem('token')
+    const uncodedToken = parseJwt(token);
+    if (uncodedToken?._id) {
+      setIsAuthentificated(true)
+    }
+    // else if (!authPath.includes(location.pathname)) {
+    //   navigate('/login');
+    // }
+  }, [navigate]);
+
+  const authRoutes = <> <Route
+    path="login"
+    element={
+      <Modal activeModal={activeModal} setShowModal={setShowModal}>
+        <Login setShowModal={setShowModal} />
+      </Modal>
+    }
+  ></Route>
+    <Route
+      path="register"
+      element={
+        <Modal activeModal={activeModal} setShowModal={setShowModal}>
+          <Register setShowModal={setShowModal} />
+        </Modal>
+      }
+    ></Route>
+    <Route
+      path="reset-password"
+      element={
+        <Modal activeModal={activeModal} setShowModal={setShowModal}>
+          <ResetPass setShowModal={setShowModal} />
+        </Modal>
+      }
+    ></Route></>
+
+  return (
+    <>
+      <UserContext.Provider value={contextValue}>
+        <CardContext.Provider value={contextCardValue}>
+          <Header setShowModal={setShowModal} />
+          {isAuthentificated ?
+            <main className="content container">
+              <Routes>
+                <Route path="/" element={<CatalogPage />}>
+                  {/* <Route path="/:page" element={<CatalogPage />}></Route> */}
+                </Route>
+                <Route
+                  path="product/:productId"
+                  element={<ProductPage />}
+                ></Route>
+                <Route
+                  path="fakeRout/:productId"
+                  element={<ProductPage />}
+                ></Route>
+                <Route path="faq" element={<FaqPage />}></Route>
+                <Route path="favorites" element={<Favorites />}></Route>
+                <Route path="cart" element={<Cart />}></Route>
+                <Route path="profile" element={<Profile />}></Route>
+                <Route path="newproduct" element={<NewProduct />}></Route>
+                <Route path="chart" element={<Chart />}></Route>
+                {authRoutes}
+                <Route path="*" element={<NotFound />}></Route>
+              </Routes>
+            </main>
+            :
+            <div className="not__auth">Пожалуйста, авторизуйтесь
+              <Routes>
+                {authRoutes}
+              </Routes>
+            </div>
+          }
+          <Footer />
+        </CardContext.Provider>
       </UserContext.Provider>
-    </ThemeContext.Provider>
-  )
+    </>
+  );
 }
 
 export default App;
+// useEffect - для побочных действий
+// useEffect(()=>{}) - update на каждое изменение компонента.
+// useEffect(()=>{},[state]) - update на каждое изменение конкретного state.
+// useEffect(()=>{},[]) - update в самом начале
+
+// Чистая функция - это функция , которая при одних и тех же входных параметрах возвращает одинаковый результат.
+
+// <BrowserRouter>
+//  <Routes>
+//   <Route path="/" element={<Dashboard />}>
+//   <Route path="product" element={<AboutPage />} />
+// </Routes>
+// </BrowserRouter>
+// Asdfgk1236

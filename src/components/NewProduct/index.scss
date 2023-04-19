@@ -1,0 +1,26 @@
+.profile {
+    & .auth__info {
+       cursor: pointer;
+    }
+    & .auth__input {
+        max-height: 2.5rem;
+     }
+     &__user {
+        max-width: 740px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;    
+    
+    }
+    &__avatar {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+        padding:  3rem 0 2rem 0;
+    }
+    &__avatar-img {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+    }
+}
